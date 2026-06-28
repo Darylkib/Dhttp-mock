@@ -1,0 +1,2502 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DHTTP — 去中心化传输协议</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    color: #111;
+    background: #fff;
+    overflow: hidden;
+    height: 100vh;
+  }
+
+  /* ===== Slides container ===== */
+  .slides-wrap {
+    height: 100vh;
+    overflow: hidden;
+    position: relative;
+  }
+  .slides-track {
+    height: 100%;
+    transition: transform 0.5s cubic-bezier(0.65, 0, 0.35, 1);
+    will-change: transform;
+  }
+
+  .slide {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background: #fff;
+  }
+  .slide-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    width: 100%;
+  }
+
+  /* ===== Page indicator ===== */
+  .pagination {
+    position: fixed;
+    right: 2rem;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    z-index: 100;
+  }
+  .pagination button {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 2px solid #ccc;
+    background: transparent;
+    cursor: pointer;
+    padding: 0;
+    transition: all 0.3s;
+  }
+  .pagination button.active {
+    background: #111;
+    border-color: #111;
+    transform: scale(1.3);
+  }
+
+  /* ===== Keyboard hint ===== */
+  .hint {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.75rem;
+    color: #ccc;
+    font-weight: 600;
+    letter-spacing: 2px;
+    z-index: 100;
+    animation: fadeHint 4s forwards;
+  }
+  @keyframes fadeHint {
+    0%, 60% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  /* ========== SLIDE 1: HERO ========== */
+  .slide-hero {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    height: 100vh;
+  }
+
+  .hero-left {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 4rem 5rem 4rem 4rem;
+    background: #fff;
+  }
+
+  .hero-left .tag {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #bbb;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+  }
+
+  .hero-left h1 {
+    font-size: clamp(2.5rem, 5vw, 4.5rem);
+    font-weight: 900;
+    line-height: 1.15;
+    letter-spacing: -0.03em;
+  }
+  .hero-left h1 .thin {
+    font-weight: 350;
+    color: #bbb;
+    font-size: 0.6em;
+    display: block;
+    margin-bottom: 0.1em;
+    letter-spacing: 0.03em;
+  }
+  .hero-left h1 .s {
+    text-decoration: line-through wavy #d62828;
+    text-decoration-thickness: 4px;
+  }
+  .hero-left h1 .hl {
+    background: #111;
+    color: #fff;
+    padding: 0 0.12em;
+    display: inline-block;
+  }
+
+  .hero-left .divider {
+    width: 50px;
+    height: 3px;
+    background: #111;
+    margin: 2rem 0;
+  }
+
+  .hero-left p {
+    font-size: 1.15rem;
+    color: #888;
+    max-width: 460px;
+    line-height: 1.7;
+    font-weight: 400;
+  }
+  .hero-left p .em { font-weight: 700; color: #111; }
+
+  .hero-left .btns {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 2.5rem;
+  }
+  .hero-left .btns a {
+    padding: 1rem 2.5rem;
+    border-radius: 60px;
+    font-weight: 700;
+    font-size: 1rem;
+    text-decoration: none;
+    transition: all 0.25s;
+  }
+  .hero-left .btns a:hover { transform: translateY(-2px); }
+  .hero-left .btns .primary { background: #111; color: #fff; }
+  .hero-left .btns .primary:hover { background: #333; }
+  .hero-left .btns .secondary {
+    background: #fff;
+    color: #111;
+    border: 2px solid #eee;
+  }
+  .hero-left .btns .secondary:hover { border-color: #111; }
+
+  .hero-right {
+    position: relative;
+    overflow: hidden;
+    background: #eee;
+  }
+  .hero-right img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* ========== SLIDE 2: LIGHT TIMELINE ========== */
+  .slide-timeline {
+    padding: 0 2rem;
+    position: relative;
+    overflow: hidden;
+    background: #fff;
+    color: #333;
+  }
+  .slide-timeline::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url('https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1200&q=80');
+    background-size: cover;
+    background-position: center;
+    opacity: 0.07;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .slide-timeline .slide-inner {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+  }
+  .slide-timeline .tl-content { flex: 1; max-width: 920px; }
+
+  /* ===== Outage card ===== */
+  .slide-timeline .tl-image {
+    flex: 0 0 260px;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #fff;
+    border: 1px solid rgba(217, 119, 6, 0.2);
+    padding: 1.2rem 1.4rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.6rem;
+  }
+  .tl-outage {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 0.1rem 0.7rem;
+    align-items: center;
+  }
+  .tl-outage .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ff4444;
+    box-shadow: 0 0 6px rgba(255, 68, 68, 0.6);
+    grid-row: span 2;
+    align-self: center;
+  }
+  .tl-outage .name {
+    font-family: 'Courier New', monospace;
+    font-weight: 800;
+    font-size: 1rem;
+    color: #16a34a;
+  }
+  .tl-outage .date {
+    font-family: 'Courier New', monospace;
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: rgba(217, 119, 6, 0.5);
+    letter-spacing: 1px;
+    text-align: right;
+  }
+  .tl-outage .desc {
+    font-family: 'Courier New', monospace;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #777;
+    grid-column: 2 / 4;
+  }
+  .tl-outage .desc .hl {
+    color: #ff4444;
+    font-weight: 800;
+  }
+  .tl-divider {
+    border-top: 1px solid rgba(217, 119, 6, 0.1);
+    margin: 0.2rem 0;
+  }
+
+  /* ===== Title ===== */
+  .slide-timeline .story-title {
+    text-align: center;
+    font-size: clamp(2.8rem, 5vw, 4rem);
+    font-weight: 900;
+    line-height: 1.3;
+    margin: 2rem 0 2.5rem;
+    color: #111;
+  }
+  .slide-timeline .story-title .hl {
+    color: #d97706;
+    background: transparent;
+    padding: 0 0.1em;
+  }
+
+  /* ===== Timeline ===== */
+  .timeline {
+    position: relative;
+    padding-left: 4rem;
+    max-width: 920px;
+    margin: 0 auto;
+  }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 14px;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, rgba(217, 119, 6, 0.35), rgba(217, 119, 6, 0.08));
+  }
+
+  .tl-item {
+    position: relative;
+    padding-bottom: 2.5rem;
+  }
+  .tl-item:last-child { padding-bottom: 0; }
+
+  .tl-item::before {
+    content: '';
+    position: absolute;
+    left: -4rem;
+    top: 8px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid rgba(217, 119, 6, 0.25);
+    box-shadow: 0 0 8px rgba(217, 119, 6, 0.08);
+    z-index: 1;
+  }
+  .tl-item.highlight::before {
+    background: #d97706;
+    border-color: #d97706;
+    box-shadow: 0 0 16px rgba(217, 119, 6, 0.25);
+  }
+
+  /* ===== Timeline manual reveal ===== */
+  .timeline .tl-item {
+    opacity: 0;
+    transform: translateX(-24px);
+    transition: opacity 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .timeline .tl-item.revealed {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  .timeline .tl-item.revealed::before {
+    border-color: rgba(217, 119, 6, 0.6);
+    box-shadow: 0 0 10px rgba(217, 119, 6, 0.15);
+  }
+
+  .tl-item .tl-year {
+    font-family: 'Courier New', monospace;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: rgba(217, 119, 6, 0.5);
+    letter-spacing: 1px;
+    margin-bottom: 0.2rem;
+  }
+  .tl-item.highlight .tl-year {
+    color: #d97706;
+    font-weight: 800;
+  }
+
+  .tl-item .tl-head {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.15rem;
+  }
+  .tl-item .tl-head .t {
+    font-size: 1.8rem;
+    font-weight: 900;
+    color: #222;
+  }
+  .tl-item.highlight .tl-head .t {
+    color: #d97706;
+  }
+
+  .tl-item .tl-d {
+    font-family: 'Courier New', monospace;
+    font-size: 1.2rem;
+    font-weight: 500;
+    color: #666;
+    line-height: 1.7;
+    max-width: 720px;
+  }
+  .tl-item.highlight .tl-d {
+    color: #444;
+  }
+
+  .tl-hint {
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+    color: #aaa;
+    text-align: center;
+    margin-top: 1.8rem;
+    letter-spacing: 2px;
+    animation: hintPulse 2s ease-in-out infinite;
+  }
+  @keyframes hintPulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+  }
+
+  /* ========== SLIDE 3: CONTRAST (split-screen) ========== */
+  .slide-contrast {
+    height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    position: relative;
+  }
+
+  .contrast-side {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .contrast-side .contrast-img {
+    flex: 0 0 45%;
+    height: 100vh;
+    overflow: hidden;
+    position: relative;
+  }
+  .contrast-side .contrast-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .contrast-side .contrast-text {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 2rem;
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+  }
+
+  .contrast-side .bg-label {
+    position: absolute;
+    font-size: clamp(5rem, 12vw, 9rem);
+    font-weight: 900;
+    line-height: 1;
+    pointer-events: none;
+    user-select: none;
+    z-index: 0;
+    letter-spacing: -0.04em;
+    opacity: 0.06;
+  }
+  .contrast-side.left  .bg-label {
+    right: 0.05em;
+    bottom: 0.05em;
+  }
+  .contrast-side.right .bg-label {
+    left: 0.05em;
+    top: 0.05em;
+  }
+
+  .contrast-side.left {
+    background: #f5faf5;
+  }
+  .contrast-side.right {
+    background: #fef2f2;
+    flex-direction: row-reverse;
+  }
+
+  .contrast-side .contrast-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  /* Animation initial state */
+  .slide .slide-contrast .contrast-side,
+  .slide .slide-contrast .contrast-vs {
+    opacity: 0;
+  }
+
+  .contrast-side .icon {
+    font-size: 4.5rem;
+    display: block;
+    margin-bottom: 0.5rem;
+    position: relative;
+    z-index: 1;
+  }
+  .contrast-side .t {
+    font-size: clamp(2.2rem, 4vw, 3.2rem);
+    font-weight: 900;
+    line-height: 1.2;
+    position: relative;
+    z-index: 1;
+  }
+  .contrast-side .d {
+    font-size: clamp(1.1rem, 1.8vw, 1.4rem);
+    font-weight: 600;
+    line-height: 1.5;
+    margin-top: 0.6rem;
+    max-width: 400px;
+    position: relative;
+    z-index: 1;
+  }
+  .contrast-side.left  .t { color: #166534; }
+  .contrast-side.left  .d { color: #4a7c59; }
+  .contrast-side.right .t { color: #b91c1c; }
+  .contrast-side.right .d { color: #b05353; }
+
+  .contrast-vs {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+    background: #111;
+    color: #fff;
+    font-size: clamp(1.6rem, 3vw, 2.2rem);
+    font-weight: 900;
+    padding: 0.6rem 1.5rem;
+    border-radius: 60px;
+    border: 3px solid #fff;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    letter-spacing: 2px;
+  }
+
+  .contrast-label {
+    position: absolute;
+    top: 3rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #bbb;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    z-index: 5;
+  }
+
+  /* Slide 3 pop-in animation */
+  @keyframes popIn {
+    from { opacity: 0; transform: scale(0.85); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+  @keyframes popInVS {
+    from { opacity: 0; transform: translate(-50%, -50%) scale(0.85); }
+    to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  }
+  .slide.active .slide-contrast .contrast-side.left {
+    animation: popIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+  .slide.active .slide-contrast .contrast-side.right {
+    animation: popIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    animation-delay: 0.1s;
+  }
+  .slide.active .slide-contrast .contrast-vs {
+    animation: popInVS 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    animation-delay: 0.05s;
+  }
+
+  /* ========== SLIDE 4: SOLUTION ========== */
+  .slide-solution {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+  }
+
+  .slide-solution .sol-wrap {
+    position: relative;
+    display: grid;
+    grid-template-rows: auto 1fr;
+    gap: 2rem;
+    background: linear-gradient(rgba(25,25,25,0.88), rgba(25,25,25,0.88)), url('https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=1400&q=80') center/cover no-repeat;
+    color: #fff;
+    border-radius: 32px;
+    padding: 4rem 5rem;
+    max-width: 1300px;
+    width: 100%;
+    height: 100%;
+    isolation: isolate;
+  }
+
+  /* ===== Network animation background ===== */
+  .sol-wrap .net-bg {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 0;
+    border-radius: 32px;
+  }
+
+  .net-stream {
+    position: absolute;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(74, 222, 128, 0.35), transparent);
+    animation: streamScroll 4s ease-in-out infinite;
+  }
+  .net-stream:nth-child(1) { top: 15%; width: 35%; animation-delay: 0s; }
+  .net-stream:nth-child(2) { top: 30%; width: 25%; animation-delay: 1s; left: -10%; }
+  .net-stream:nth-child(3) { top: 60%; width: 40%; animation-delay: 0.5s; }
+  .net-stream:nth-child(4) { top: 78%; width: 30%; animation-delay: 2s; left: -15%; }
+  .net-stream:nth-child(5) { top: 88%; width: 20%; animation-delay: 3s; }
+
+  @keyframes streamScroll {
+    0%   { transform: translateX(0); opacity: 0; }
+    20%  { opacity: 0.7; }
+    80%  { opacity: 0.7; }
+    100% { transform: translateX(calc(100vw + 20%)); opacity: 0; }
+  }
+
+  .net-node {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #4ade80;
+    box-shadow: 0 0 6px rgba(74, 222, 128, 0.6);
+    animation: nodePulse 2s ease-in-out infinite;
+  }
+  .net-node:nth-child(6) { top: 15%; left: 25%; animation-delay: 0s; }
+  .net-node:nth-child(7) { top: 30%; left: 60%; animation-delay: 0.8s; }
+  .net-node:nth-child(8) { top: 60%; left: 35%; animation-delay: 1.6s; }
+  .net-node:nth-child(9) { top: 78%; left: 70%; animation-delay: 0.4s; }
+  .net-node:nth-child(10) { top: 88%; left: 20%; animation-delay: 2.2s; }
+
+  @keyframes nodePulse {
+    0%, 100% { transform: scale(1); opacity: 0.4; }
+    50% { transform: scale(2.5); opacity: 1; }
+  }
+
+  .net-vert {
+    position: absolute;
+    width: 1px;
+    background: linear-gradient(180deg, transparent, rgba(74, 222, 128, 0.15), transparent);
+    animation: vertPulse 3s ease-in-out infinite;
+  }
+  .net-vert:nth-child(11) { left: 25%; top: 10%; height: 60%; animation-delay: 0s; }
+  .net-vert:nth-child(12) { left: 60%; top: 20%; height: 45%; animation-delay: 1.5s; }
+
+  @keyframes vertPulse {
+    0%, 100% { opacity: 0.15; }
+    50% { opacity: 0.5; }
+  }
+
+  .sol-wrap > *:not(.net-bg) { position: relative; z-index: 1; }
+
+  .sol-header {
+    text-align: center;
+  }
+  .sol-header .badge {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #888;
+    letter-spacing: 4px;
+    margin-bottom: 0.8rem;
+  }
+  .sol-header h2 {
+    font-size: clamp(2.5rem, 4.5vw, 3.5rem);
+    font-weight: 900;
+    line-height: 1.2;
+    letter-spacing: -0.03em;
+    color: #fff;
+  }
+  .sol-header h2 .hl { background: #facc15; color: #111; padding: 0 0.2em; }
+
+  .sol-body {
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 4rem;
+    align-items: center;
+    min-height: 0;
+  }
+
+  .sol-body .desc {
+    font-size: 1.5rem;
+    color: #888;
+    line-height: 1.9;
+  }
+  .sol-body .desc .em { color: #facc15; font-weight: 700; }
+
+  .arch {
+    background: rgba(0,0,0,0.35);
+    backdrop-filter: blur(4px);
+    border-radius: 24px;
+    padding: 2rem;
+  }
+
+  .arch-badge {
+    font-size: 0.9rem;
+    font-weight: 800;
+    letter-spacing: 2px;
+    padding: 0.35rem 1rem;
+    border-radius: 8px;
+    display: inline-block;
+    margin-bottom: 0.8rem;
+  }
+  .arch-bad  { background: #2a1a1a; color: #ef4444; }
+  .arch-good { background: #0a2a1a; color: #4ade80; }
+
+  .arch-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .arch-node {
+    flex: 1;
+    text-align: center;
+    padding: 0.85rem 0.3rem;
+    border-radius: 14px;
+    font-size: 1rem;
+    font-weight: 700;
+  }
+  .arch-node.srv    { background: #2a2a2a; color: #facc15; }
+  .arch-node.cli    { background: #2a2a2a; color: #aaa; }
+  .arch-node.dead   { background: #3b1111; color: #ef4444; }
+  .arch-node.off    { background: #2a2a2a; color: #555; }
+  .arch-node.peer   { background: #1a2a2a; color: #4ade80; }
+
+  .arch-arrow {
+    text-align: center;
+    color: #444;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+  }
+  .arch-arrow.x { color: #ef4444; font-weight: 700; }
+
+  .arch-divider {
+    border-top: 1px dashed #333;
+    margin: 1rem 0;
+  }
+
+  .arch-verdict {
+    text-align: center;
+    font-size: 0.9rem;
+    font-weight: 700;
+    padding: 0.6rem;
+    border-radius: 10px;
+    margin-top: 0.5rem;
+  }
+  .arch-verdict.fail    { background: #2a1a1a; color: #ef4444; }
+  .arch-verdict.success { background: #0a2a1a; color: #4ade80; }
+
+  /* ========== SLIDE 5: APATHY REBUTTAL ========== */
+  .slide-feat {
+    text-align: center;
+    background: #fff;
+  }
+
+  .apathy-wrap {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .apathy-label {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 900;
+    color: #111;
+    margin-bottom: 2.5rem;
+    letter-spacing: -0.03em;
+  }
+
+  .apathy-text {
+    font-size: clamp(1.4rem, 2.8vw, 2rem);
+    color: #555;
+    line-height: 2;
+    font-weight: 500;
+    max-width: 750px;
+    margin: 0 auto;
+  }
+  .apathy-text .hl {
+    background: #facc15;
+    padding: 0 0.15em;
+    font-weight: 800;
+    color: #111;
+  }
+
+  .apathy-reveal {
+    opacity: 0;
+    transform: scale(0.92);
+    transition: none;
+    pointer-events: none;
+  }
+  .apathy-reveal.revealed {
+    opacity: 1;
+    transform: scale(1);
+    animation: punchReveal 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    pointer-events: auto;
+  }
+  @keyframes punchReveal {
+    0%   { opacity: 0; transform: scale(0.92); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  .apathy-divider {
+    width: 60px;
+    height: 3px;
+    background: #111;
+    margin: 2.5rem auto;
+  }
+
+  .apathy-punch {
+    font-size: clamp(2rem, 3.8vw, 3rem);
+    font-weight: 900;
+    color: #111;
+    line-height: 1.8;
+  }
+  .apathy-punch .hl {
+    background: #444;
+    padding: 0 0.15em;
+    color: #facc15;
+    display: inline-block;
+    transform: scale(1.1);
+  }
+  .apathy-punch .hl2 {
+    color: #dc2626;
+    font-weight: 900;
+    display: inline-block;
+    transform: scale(1.15);
+  }
+
+  .apathy-hint {
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+    color: #aaa;
+    margin-top: 3rem;
+    letter-spacing: 2px;
+    animation: hintPulse 2s ease-in-out infinite;
+    transition: opacity 0.4s;
+  }
+  .apathy-reveal.revealed ~ .apathy-hint {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* ========== SLIDE 6: FACEBOOK BREACH (NEWS STYLE) ========== */
+  .slide-breach {
+    display: grid;
+    grid-template-columns: 0.7fr 1.3fr;
+    height: 100vh;
+  }
+
+  .breach-left {
+    position: relative;
+    overflow: hidden;
+    background: #000;
+  }
+  .breach-left img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.9;
+  }
+
+  /* Bottom photo banner */
+  .breach-left .photo-banner {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0,0,0,0.75);
+    padding: 1.5rem 2rem;
+    z-index: 2;
+  }
+  .photo-banner .num {
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 900;
+    color: #ff4444;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+  .photo-banner .num-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: rgba(255,255,255,0.5);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-top: 0.2rem;
+  }
+
+  .breach-right {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 4rem 5rem;
+    background: #fff;
+  }
+
+  /* News header bar */
+  .breach-right .news-header {
+    border-bottom: 3px solid #111;
+    padding-bottom: 0.8rem;
+    margin-bottom: 1.8rem;
+  }
+  .news-header .publication {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: #111;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+  }
+  .news-header .dateline {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #999;
+    margin-top: 0.2rem;
+  }
+
+  .breach-title {
+    font-size: clamp(2.4rem, 4.8vw, 3.6rem);
+    font-weight: 900;
+    line-height: 1.25;
+    letter-spacing: -0.02em;
+    color: #111;
+    margin-bottom: 2.5rem;
+  }
+  .breach-title .hl-red {
+    color: #dc2626;
+  }
+
+  .breach-desc {
+    font-size: 1.35rem;
+    color: #444;
+    line-height: 2.1;
+    font-weight: 500;
+    max-width: 560px;
+  }
+  .breach-desc .hl {
+    background: #111;
+    color: #fff;
+    padding: 0 0.15em;
+    font-weight: 800;
+  }
+
+  .breach-divider {
+    width: 60px;
+    height: 3px;
+    background: #ccc;
+    margin: 1.8rem 0;
+  }
+
+  .breach-footer {
+    font-size: 1.15rem;
+    color: #666;
+    line-height: 2;
+    max-width: 560px;
+  }
+  .breach-footer .hl2 {
+    color: #dc2626;
+    font-weight: 800;
+  }
+
+  /* ========== SLIDE 7: DHTTP REVOLUTION ========== */
+  .slide-dhttp {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: #fff;
+  }
+  .dhttp-inner {
+    max-width: 1000px;
+    width: 100%;
+    padding: 3rem 4rem;
+  }
+
+  .dhttp-hero {
+    margin-bottom: 3.5rem;
+  }
+  .dhttp-tag {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #bbb;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 0.6rem;
+  }
+  .dhttp-title {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 900;
+    line-height: 1.2;
+    letter-spacing: -0.03em;
+    color: #111;
+    margin-bottom: 0.8rem;
+  }
+  .dhttp-title .hl {
+    background: #111;
+    color: #facc15;
+    padding: 0 0.12em;
+    display: inline-block;
+  }
+  .dhttp-sub {
+    font-size: 1.3rem;
+    color: #888;
+    font-weight: 500;
+  }
+
+  .dhttp-points {
+    display: flex;
+    flex-direction: column;
+    gap: 1.8rem;
+    margin-bottom: 3rem;
+  }
+
+  .dhttp-point {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+  }
+  .dhttp-num {
+    flex-shrink: 0;
+    font-size: 1rem;
+    font-weight: 900;
+    color: #facc15;
+    background: #111;
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 0.1rem;
+  }
+  .dhttp-p-body {
+    flex: 1;
+  }
+  .dhttp-p-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #111;
+    margin-bottom: 0.3rem;
+    line-height: 1.4;
+  }
+  .dhttp-p-desc {
+    font-size: 1.1rem;
+    color: #555;
+    line-height: 1.8;
+    max-width: 680px;
+  }
+
+  .dhttp-footer {
+    border-top: 2px solid #eee;
+    padding-top: 1.8rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+  .dhttp-footer-line {
+    font-size: 0.9rem;
+    color: #aaa;
+    font-weight: 500;
+    letter-spacing: 1px;
+  }
+  .dhttp-footer-brand {
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: #111;
+    letter-spacing: -0.02em;
+  }
+  .dhttp-footer-brand strong {
+    background: #111;
+    color: #facc15;
+    padding: 0 0.15em;
+  }
+
+  /* ========== RESPONSIVE ========== */
+  /* ========== SLIDE 8: DQUIC BREAKTHROUGH ========== */
+  .dquic-bt {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: #fff;
+  }
+  .dquic-bt-inner {
+    max-width: 1100px;
+    width: 100%;
+    padding: 3rem 4rem;
+  }
+  .dquic-bt-tag {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #2563eb;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+  .dquic-bt-title {
+    font-size: clamp(2.6rem, 5vw, 3.8rem);
+    font-weight: 900;
+    line-height: 1.2;
+    letter-spacing: -0.03em;
+    color: #111;
+    margin-bottom: 2.5rem;
+  }
+  .dquic-bt-title .hl {
+    font-weight: 350;
+    color: #94a3b8;
+    font-size: 0.65em;
+    display: inline-block;
+    margin-left: 0.2em;
+  }
+  .dquic-bt-body {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 3rem;
+    align-items: center;
+  }
+  .dquic-bt-sub {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #2563eb;
+    margin-bottom: 1.5rem;
+    line-height: 1.4;
+  }
+  .dquic-bt-text {
+    font-size: 1.2rem;
+    color: #555;
+    line-height: 1.9;
+    margin-bottom: 1.5rem;
+    max-width: 600px;
+  }
+  .dquic-bt-text strong {
+    color: #2563eb;
+    font-weight: 800;
+  }
+  .dquic-bt-feats { display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem; }
+  .dquic-bt-feat {
+    display: flex;
+    gap: 0.8rem;
+    font-size: 1.1rem;
+    color: #555;
+    line-height: 1.8;
+    max-width: 580px;
+  }
+  .dquic-bt-feat strong { color: #0f172a; }
+  .dquic-bt-feat-dot {
+    flex-shrink: 0;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #2563eb;
+    margin-top: 0.6rem;
+  }
+  /* NAT diagram */
+  .nat-diagram {
+    position: relative;
+    background: #f8fafc;
+    border-radius: 20px;
+    padding: 2.5rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    min-height: 280px;
+    border: 1px solid #e2e8f0;
+  }
+  .nat-device {
+    text-align: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #0f172a;
+    padding: 0.8rem 1rem;
+    border-radius: 12px;
+    background: #fff;
+    border: 2px solid #e2e8f0;
+    z-index: 2;
+    line-height: 1.5;
+    min-width: 90px;
+  }
+  .nat-device span { font-size: 0.65rem; font-weight: 500; color: #94a3b8; display: block; }
+  .nat-bar {
+    position: relative;
+    width: 40px;
+    height: 100%;
+    min-height: 180px;
+    background: repeating-linear-gradient(90deg, #2563eb, #2563eb 3px, transparent 3px, transparent 8px);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+  }
+  .nat-bar-label {
+    font-size: 0.65rem;
+    font-weight: 800;
+    color: #fff;
+    background: #2563eb;
+    padding: 0.3rem 0.5rem;
+    border-radius: 4px;
+    letter-spacing: 1px;
+    writing-mode: vertical-lr;
+  }
+  .nat-bar-line {
+    position: absolute;
+    inset: 0;
+    border: 2px dashed rgba(37,99,235,0.3);
+    border-radius: 6px;
+  }
+  .nat-arrow {
+    position: absolute;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #2563eb;
+    background: rgba(37,99,235,0.08);
+    padding: 0.3rem 0.7rem;
+    border-radius: 20px;
+  }
+  .nat-arrow-1 { top: 12%; right: 10%; }
+  .nat-arrow-2 { bottom: 12%; left: 10%; }
+
+  /* ========== SLIDE 9: EP & EP MODEL ========== */
+  .dquic-ep {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: #fff;
+  }
+  .dquic-ep-inner {
+    max-width: 1100px;
+    width: 100%;
+    padding: 3rem 4rem;
+  }
+  .dquic-ep-tag {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #7c3aed;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+  .dquic-ep-title {
+    font-size: clamp(2.6rem, 5vw, 3.8rem);
+    font-weight: 900;
+    line-height: 1.2;
+    letter-spacing: -0.03em;
+    color: #111;
+    margin-bottom: 0.5rem;
+  }
+  .dquic-ep-title .hl { color: #7c3aed; }
+  .dquic-ep-sub {
+    font-size: 1.2rem;
+    color: #94a3b8;
+    font-weight: 600;
+    margin-bottom: 2.5rem;
+  }
+  .dquic-ep-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5rem;
+    align-items: start;
+  }
+  .dquic-ep-diagram {
+    position: relative;
+    background: #faf5ff;
+    border-radius: 20px;
+    padding: 2rem;
+    min-height: 300px;
+    border: 1px solid #e9d5ff;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    align-content: center;
+    justify-content: center;
+  }
+  .ep-node {
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #0f172a;
+    padding: 0.7rem 0.9rem;
+    border-radius: 12px;
+    z-index: 2;
+    line-height: 1.5;
+    min-width: 80px;
+  }
+  .ep-node span { font-size: 0.6rem; font-weight: 500; color: #94a3b8; display: block; }
+  .ep-node--ep {
+    background: #fff;
+    border: 2px solid #cbd5e1;
+  }
+  .ep-node--amp {
+    background: #7c3aed;
+    border: 2px solid #7c3aed;
+    color: #fff;
+  }
+  .ep-node--amp span { color: rgba(255,255,255,0.6); }
+  .ep-node--target {
+    background: #fff;
+    border: 2px solid #7c3aed;
+  }
+  .dquic-ep-right {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+  }
+  .dquic-ep-card {
+    background: #faf5ff;
+    border: 1px solid #e9d5ff;
+    border-radius: 16px;
+    padding: 1.5rem;
+  }
+  .dquic-ep-card-title {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 0.6rem;
+  }
+  .dquic-ep-card p {
+    font-size: 1.1rem;
+    color: #555;
+    line-height: 1.9;
+  }
+  .dquic-ep-card p strong { color: #7c3aed; }
+
+  /* ========== SLIDE 10: DQUIC PERFORMANCE ========== */
+  .dquic-perf {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: #fff;
+  }
+  .dquic-perf-inner {
+    max-width: 1100px;
+    width: 100%;
+    padding: 3rem 4rem;
+  }
+  .dquic-perf-tag {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #0891b2;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+  .dquic-perf-title {
+    font-size: clamp(2.4rem, 4.8vw, 3.6rem);
+    font-weight: 900;
+    line-height: 1.2;
+    letter-spacing: -0.03em;
+    color: #111;
+    margin-bottom: 0.3rem;
+  }
+  .dquic-perf-sub {
+    font-size: 1.1rem;
+    color: #94a3b8;
+    font-weight: 600;
+    margin-bottom: 2rem;
+  }
+  .dquic-perf-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5rem;
+    align-items: center;
+  }
+  .dquic-perf-diagram {
+    position: relative;
+    background: #f0fdfa;
+    border-radius: 20px;
+    padding: 2rem;
+    min-height: 260px;
+    border: 1px solid #ccfbf1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+  .perf-phone {
+    flex-shrink: 0;
+  }
+  .perf-phone-body {
+    width: 50px;
+    height: 90px;
+    background: #0f172a;
+    border-radius: 12px;
+    position: relative;
+    border: 2px solid #1e293b;
+  }
+  .perf-phone-screen {
+    position: absolute;
+    top: 8px;
+    left: 5px;
+    right: 5px;
+    bottom: 8px;
+    background: linear-gradient(135deg, #0891b2, #06b6d4);
+    border-radius: 4px;
+  }
+  .perf-path {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .perf-path-icon {
+    font-size: 0.65rem;
+    font-weight: 800;
+    color: #fff;
+    padding: 0.3rem 0.6rem;
+    border-radius: 6px;
+  }
+  .perf-path--wifi .perf-path-icon { background: #0891b2; }
+  .perf-path--5g   .perf-path-icon { background: #06b6d4; }
+  .perf-path--v6   .perf-path-icon { background: #0d9488; }
+  .perf-path-line {
+    width: 2px;
+    height: 50px;
+    background: linear-gradient(180deg, var(--line-color, #0891b2), transparent);
+  }
+  .perf-path--wifi { --line-color: #0891b2; }
+  .perf-path--5g   { --line-color: #06b6d4; }
+  .perf-path--v6   { --line-color: #0d9488; }
+  .perf-path--wifi .perf-path-line { background: linear-gradient(180deg, #0891b2, rgba(8,145,178,0.2)); }
+  .perf-path--5g   .perf-path-line { background: linear-gradient(180deg, #06b6d4, rgba(6,182,212,0.2)); }
+  .perf-path--v6   .perf-path-line { background: linear-gradient(180deg, #0d9488, rgba(13,148,136,0.2)); }
+  .perf-converge {
+    margin-left: 0.5rem;
+    text-align: center;
+  }
+  .perf-converge-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #0f172a;
+    background: #fff;
+    border: 2px solid #0d9488;
+    border-radius: 20px;
+    padding: 0.4rem 0.8rem;
+  }
+  .dquic-perf-info { display: flex; flex-direction: column; gap: 1rem; }
+  .dquic-perf-text {
+    font-size: 1rem;
+    color: #555;
+    line-height: 1.8;
+  }
+  .dquic-perf-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+  .dquic-perf-tab {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 1.2rem 1.5rem;
+  }
+  .dquic-perf-tab.active {
+    border-color: #0891b2;
+    background: #f0fdfa;
+  }
+  .dquic-perf-tab-title {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 0.15rem;
+  }
+  .dquic-perf-tab-stat {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #94a3b8;
+    margin-bottom: 0.6rem;
+  }
+  .dquic-perf-tab-bar {
+    height: 6px;
+    background: #e2e8f0;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+    overflow: hidden;
+  }
+  .dquic-perf-tab-fill {
+    height: 100%;
+    background: #0891b2;
+    border-radius: 4px;
+  }
+  .dquic-perf-tab-fill--alt { background: #94a3b8; }
+  .dquic-perf-tab-desc {
+    font-size: 0.8rem;
+    color: #64748b;
+    font-weight: 500;
+  }
+
+  /* ========== SLIDE 11: DDNS ========== */
+  .ddns {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: #fff;
+  }
+  .ddns-inner {
+    max-width: 1100px;
+    width: 100%;
+    padding: 3rem 4rem;
+  }
+  .ddns-tag {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #0d9488;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+  .ddns-title {
+    font-size: clamp(2.6rem, 5vw, 3.8rem);
+    font-weight: 900;
+    line-height: 1.2;
+    letter-spacing: -0.03em;
+    color: #111;
+    margin-bottom: 0.3rem;
+  }
+  .ddns-sub {
+    font-size: 1.2rem;
+    color: #94a3b8;
+    font-weight: 600;
+    margin-bottom: 2.5rem;
+  }
+  .ddns-body {
+    display: grid;
+    grid-template-columns: 0.9fr 1.1fr;
+    gap: 3rem;
+    align-items: start;
+  }
+  .ddns-left { display: flex; flex-direction: column; gap: 0.8rem; }
+  .ddns-card {
+    border-radius: 16px;
+    padding: 1.5rem;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+  }
+  .ddns-card--solution {
+    border-color: #0d9488;
+    background: #f0fdfa;
+  }
+  .ddns-card-label {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #94a3b8;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+  .ddns-card--solution .ddns-card-label { color: #0d9488; }
+  .ddns-card p {
+    font-size: 1.1rem;
+    color: #555;
+    line-height: 1.8;
+    margin: 0;
+  }
+  .ddns-card p strong { color: #0f172a; }
+  .ddns-arrow {
+    text-align: center;
+    font-size: 1.5rem;
+    color: #0d9488;
+    font-weight: 700;
+  }
+  .ddns-right { display: flex; flex-direction: column; gap: 1.2rem; }
+  .ddns-record {
+    background: #f0fdfa;
+    border: 1px solid #0d9488;
+    border-radius: 16px;
+    padding: 1.5rem;
+  }
+  .ddns-record-tag {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: #0d9488;
+    margin-bottom: 0.8rem;
+  }
+  .ddns-record-items { display: flex; flex-direction: column; gap: 0.5rem; }
+  .ddns-record-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 1rem;
+    color: #444;
+  }
+  .ddns-record-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #0d9488;
+    flex-shrink: 0;
+  }
+  .ddns-flags {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 1.2rem 1.5rem;
+  }
+  .ddns-flags-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #64748b;
+    margin-bottom: 0.8rem;
+  }
+  .ddns-flags-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.4rem 1rem;
+  }
+  .ddns-flag {
+    font-size: 0.85rem;
+    color: #555;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .ddns-flag-bit {
+    background: #0d9488;
+    color: #fff;
+    font-size: 0.6rem;
+    font-weight: 800;
+    width: 1.3rem;
+    height: 1.3rem;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  /* ========== SLIDE 12: DDNS AUTO ========== */
+  .ddns-auto {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: #fff;
+  }
+  .ddns-auto-inner {
+    max-width: 1000px;
+    width: 100%;
+    padding: 3rem 4rem;
+  }
+  .ddns-auto-tag {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #0d9488;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+  .ddns-auto-title {
+    font-size: clamp(2.4rem, 4.8vw, 3.6rem);
+    font-weight: 900;
+    line-height: 1.2;
+    letter-spacing: -0.03em;
+    color: #111;
+    margin-bottom: 2.5rem;
+  }
+  .ddns-auto-title .hl { color: #94a3b8; font-weight: 300; }
+  .ddns-auto-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1.2rem;
+  }
+  .ddns-auto-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    padding: 1.8rem 1.5rem;
+  }
+  .ddns-auto-card--future {
+    border-color: #0d9488;
+    background: #f0fdfa;
+  }
+  .ddns-auto-card-icon {
+    font-size: 2rem;
+    margin-bottom: 0.8rem;
+  }
+  .ddns-auto-card-title {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 0.6rem;
+  }
+  .ddns-auto-card p {
+    font-size: 1rem;
+    color: #555;
+    line-height: 1.8;
+  }
+  .ddns-auto-card code {
+    font-size: 0.85rem;
+    background: #e2e8f0;
+    padding: 0.1em 0.3em;
+    border-radius: 4px;
+    color: #0d9488;
+  }
+
+  /* ========== SLIDE 13: SUMMARY MIND MAP ========== */
+  .summary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: #fff;
+    position: relative;
+    overflow: hidden;
+  }
+  .summary-inner {
+    max-width: 1100px;
+    width: 100%;
+    padding: 3rem 4rem;
+    text-align: center;
+  }
+  .summary-title {
+    font-size: clamp(2.4rem, 4.8vw, 3.6rem);
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    color: #111;
+    margin-bottom: 2.5rem;
+    position: relative;
+    display: inline-block;
+  }
+  .summary-title::after {
+    content: '';
+    display: block;
+    width: 3rem;
+    height: 4px;
+    border-radius: 2px;
+    background: #4f46e5;
+    margin: 0.6rem auto 0;
+  }
+  .summary-map {
+    display: grid;
+    grid-template-columns: 1.2fr 1.8fr 1fr;
+    gap: 1.5rem;
+    align-items: stretch;
+    position: relative;
+  }
+  .summary-map::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 26%;
+    right: 26%;
+    height: 2px;
+    background: #e2e8f0;
+    transform: translateY(-50%);
+    z-index: 0;
+  }
+  .summary-col {
+    position: relative;
+    z-index: 1;
+  }
+  .summary-col-header {
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 0.5rem 1rem;
+    border-radius: 100px;
+    display: inline-block;
+    margin-bottom: 1rem;
+  }
+  .summary-col--problem .summary-col-header {
+    color: #dc2626;
+    background: #fef2f2;
+  }
+  .summary-col--solution .summary-col-header {
+    color: #4f46e5;
+    background: #eef2ff;
+  }
+  .summary-col--result .summary-col-header {
+    color: #0d9488;
+    background: #f0fdfa;
+  }
+  .summary-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: left;
+  }
+  .summary-item {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 0.8rem 1rem;
+    font-size: 0.95rem;
+    color: #555;
+    line-height: 1.6;
+    transition: border-color 0.2s;
+  }
+  .summary-item strong {
+    color: #0f172a;
+    font-weight: 700;
+  }
+  .summary-item .hl-accent {
+    color: #4f46e5;
+    font-weight: 700;
+  }
+  .summary-item .hl-red {
+    color: #dc2626;
+    font-weight: 700;
+  }
+  .summary-item .hl-green {
+    color: #0d9488;
+    font-weight: 700;
+  }
+  .summary-col--problem .summary-item:hover {
+    border-color: #fca5a5;
+  }
+  .summary-col--solution .summary-item:hover {
+    border-color: #a5b4fc;
+  }
+  .summary-col--result .summary-item:hover {
+    border-color: #5eead4;
+  }
+  .summary-sub {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding-left: 1rem;
+    margin-top: 0.4rem;
+    border-left: 2px solid #ddd6fe;
+  }
+  .summary-sub-item {
+    font-size: 0.85rem;
+    color: #666;
+    line-height: 1.5;
+    padding: 0.3rem 0 0.3rem 0.5rem;
+    position: relative;
+  }
+  .summary-sub-item::before {
+    content: '';
+    position: absolute;
+    left: -0.35rem;
+    top: 0.65rem;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #ddd6fe;
+  }
+  .summary-sub-item .hl-accent {
+    color: #4f46e5;
+    font-weight: 600;
+  }
+  .summary-sub-item .hl-green {
+    color: #0d9488;
+    font-weight: 600;
+  }
+  .summary-result {
+    background: linear-gradient(135deg, #eef2ff, #f0fdfa);
+    border: 2px solid #4f46e5;
+    border-radius: 16px;
+    padding: 1.2rem 1.2rem;
+    font-size: 1rem;
+    color: #444;
+    line-height: 1.7;
+  }
+  .summary-result strong {
+    color: #0f172a;
+  }
+
+  @media (max-width: 860px) {
+    .slide-hero { grid-template-columns: 1fr; }
+    .hero-left { padding: 2rem; }
+    .hero-right { min-height: 200px; }
+    .slide-contrast { grid-template-columns: 1fr; }
+    .contrast-side { flex-direction: column !important; }
+    .contrast-side .contrast-img { flex: 0 0 200px; width: 100%; height: 200px; }
+    .contrast-vs { font-size: 1.2rem; padding: 0.4rem 1rem; }
+    .slide-timeline .slide-inner { flex-direction: column; }
+    .slide-timeline .tl-image { display: none; }
+    .slide-solution { padding: 1rem; }
+    .slide-solution .sol-wrap { padding: 2rem; }
+    .sol-body { grid-template-columns: 1fr; gap: 1.5rem; }
+    .slide-breach { grid-template-columns: 1fr; }
+    .breach-left { min-height: 280px; }
+    .breach-right { padding: 2rem; }
+    .dhttp-inner { padding: 2rem; }
+    .dhttp-point { flex-direction: column; gap: 0.5rem; }
+    .dhttp-num { width: 2rem; height: 2rem; font-size: 0.85rem; }
+    .dquic-bt-body { grid-template-columns: 1fr; }
+    .dquic-ep-body { grid-template-columns: 1fr; }
+    .dquic-perf-body { grid-template-columns: 1fr; }
+    .dquic-perf-tabs { grid-template-columns: 1fr; }
+    .nat-diagram { min-height: 200px; padding: 1.5rem; }
+    .dquic-bt-inner, .dquic-ep-inner, .dquic-perf-inner { padding: 2rem; }
+    .ddns-body { grid-template-columns: 1fr; }
+    .ddns-auto-cards { grid-template-columns: 1fr; }
+    .ddns-inner, .ddns-auto-inner { padding: 2rem; }
+    .summary-map { grid-template-columns: 1fr; }
+    .summary-map::before { display: none; }
+    .summary-inner { padding: 2rem; }
+
+    .pagination { right: 1rem; }
+    body { overflow-y: auto; }
+    .slides-wrap { height: auto; overflow-y: auto; }
+    .slides-track { transform: none !important; transition: none; }
+    .slide { height: auto; min-height: 100vh; }
+  }
+</style>
+</head>
+<body>
+
+<div class="slides-wrap">
+  <div class="slides-track" id="track">
+
+    <!-- ===== SLIDE 1: Hero ===== -->
+    <div class="slide">
+      <div class="slide-hero">
+        <div class="hero-left">
+
+          <h1>
+            <span class="thin">网络诞生是为了抵御</span>
+            <span class="s">核弹</span>
+            如今却因一家机房断电<br>
+            而 <span class="hl">集体瘫痪</span> ？
+          </h1>
+          <div class="divider"></div>
+          <p>
+            <span class="em">DHTTP</span> 去中心化超文本传输协议<br>
+            拒绝巨头垄断，重回互联网最初的 <span class="em">无懈可击</span>
+          </p>
+          <div class="btns">
+            <a href="#" class="primary">探索去中心化传输</a>
+            <a href="#" class="secondary">重构你的网络架构</a>
+          </div>
+        </div>
+        <div class="hero-right">
+          <img src="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=1000&q=80" alt="Server room">
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SLIDE 2: Timeline ===== -->
+    <div class="slide">
+      <div class="slide-timeline">
+        <div class="slide-inner">
+          <div class="tl-content">
+            <div class="story-title">从 <span class="hl">防核弹</span> 到 <span class="hl">怕跳闸</span></div>
+
+            <div class="timeline">
+              <div class="tl-item highlight">
+                <div class="tl-year">1969 &gt; ARPANET</div>
+                <div class="tl-head">
+                  <span class="t">为战争而设计</span>
+                </div>
+                <div class="tl-d">美国国防部高级研究计划局，为了冷战防核打击而生</div>
+              </div>
+              <div class="tl-item">
+                <div class="tl-year">核心理念</div>
+                <div class="tl-head">
+                  <span class="t">分布式架构，永不中断</span>
+                </div>
+                <div class="tl-d">部分基地被摧毁，数据自动绕道——核弹都炸不垮</div>
+              </div>
+              <div class="tl-item">
+                <div class="tl-year">2026 &gt; 今天</div>
+                <div class="tl-head">
+                  <span class="t">中心化陷阱</span>
+                </div>
+                <div class="tl-d">过度依赖少数云巨头，一个机房断线 = 半个互联网瘫痪</div>
+              </div>
+              <div class="tl-item highlight">
+                <div class="tl-year">讽刺的现实</div>
+                <div class="tl-head">
+                  <span class="t">核弹没炸垮我们，跳闸却做到了</span>
+                </div>
+                <div class="tl-d">最分散的初衷，造出了最脆弱的中心化世界</div>
+              </div>
+            </div>
+            <div class="tl-hint">→ 按方向键逐步浏览</div>
+          </div>
+          <div class="tl-image">
+
+            <div class="tl-outage">
+              <div class="dot"></div>
+              <div class="name">Fastly</div>
+              <div class="date">2021.06.08</div>
+              <div class="desc"><span class="hl">503</span> 全球大斷線 · 持續 49 分鐘</div>
+            </div>
+
+            <div class="tl-divider"></div>
+
+            <div class="tl-outage">
+              <div class="dot"></div>
+              <div class="name">Cloudflare</div>
+              <div class="date">2022.06.21</div>
+              <div class="desc"><span class="hl">19</span> 數據中心離線 · 持續 75 分鐘</div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SLIDE 3: Contrast ===== -->
+    <div class="slide">
+      <div class="slide-contrast">
+        <div class="contrast-label">初衷 vs 结局</div>
+
+        <div class="contrast-side left">
+          <div class="contrast-img">
+            <img src="https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=800&q=80" alt="">
+          </div>
+          <div class="contrast-text">
+            <div class="bg-label">1969</div>
+            <div class="t">核弹都炸不垮</div>
+            <div class="d">ARPANET 分布式架构<br>部分被毁、数据绕道</div>
+          </div>
+        </div>
+
+        <div class="contrast-vs">VS</div>
+
+        <div class="contrast-side right">
+          <div class="contrast-img">
+            <img src="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=800&q=80" alt="">
+          </div>
+          <div class="contrast-text">
+            <div class="bg-label">2026</div>
+            <div class="t">一个跳闸全网停摆</div>
+            <div class="d">过度中心化<br>一个机房断线即瘫痪</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SLIDE 4: Solution ===== -->
+    <div class="slide">
+      <div class="slide-solution">
+          <div class="sol-wrap">
+            <div class="net-bg">
+              <div class="net-stream"></div>
+              <div class="net-stream"></div>
+              <div class="net-stream"></div>
+              <div class="net-stream"></div>
+              <div class="net-stream"></div>
+              <div class="net-node"></div>
+              <div class="net-node"></div>
+              <div class="net-node"></div>
+              <div class="net-node"></div>
+              <div class="net-node"></div>
+              <div class="net-vert"></div>
+              <div class="net-vert"></div>
+            </div>
+            <div class="sol-header">
+              <div class="badge">DHTTP</div>
+              <h2>回归初心，<span class="hl">重构下一代网络</span></h2>
+            </div>
+            <div class="sol-body">
+            <div>
+              <p class="desc">
+                <span class="em">DHTTP</span> 不只是技术升级，<br>而是将主权还给用户的革命。<br><br>
+                通过 <span class="em">点对点（P2P）</span> 传输与去中心化架构，<br>
+                数据从少数巨头机房，释放到全球每个节点。<br><br>
+                <span class="em">没有单点故障。</span>一个节点倒下，<br>千万个节点立刻顶上——
+              </p>
+            </div>
+            <div class="arch">
+
+              <div class="arch-badge arch-bad">HTTP · 中心化</div>
+              <div class="arch-row">
+                <div class="arch-node srv">中央服务器</div>
+                <div class="arch-arrow">← →</div>
+                <div class="arch-node cli">客户端 A</div>
+              </div>
+              <div class="arch-row">
+                <div class="arch-node dead">宕机</div>
+                <div class="arch-arrow x">✕</div>
+                <div class="arch-node off">客户端 B · 断连</div>
+              </div>
+              <div class="arch-verdict fail">单点故障 → 全盘瘫痪</div>
+
+              <div class="arch-divider"></div>
+
+              <div class="arch-badge arch-good">DHTTP · 去中心化</div>
+              <div class="arch-row">
+                <div class="arch-node peer">节点 A</div>
+                <div class="arch-arrow">↔</div>
+                <div class="arch-node peer">节点 B</div>
+                <div class="arch-arrow">↔</div>
+                <div class="arch-node peer">节点 C</div>
+              </div>
+              <div class="arch-row">
+                <div class="arch-node peer">节点 A</div>
+                <div class="arch-arrow">↔</div>
+                <div class="arch-node dead">宕机</div>
+                <div class="arch-arrow">↔</div>
+                <div class="arch-node peer">节点 C</div>
+              </div>
+              <div class="arch-verdict success">无单点故障 → 永不断线</div>
+
+            </div>
+          </div>
+      </div>
+    </div>
+    </div>
+
+    <!-- ===== SLIDE 5: Facebook breach ===== -->
+    <div class="slide">
+      <div class="slide-breach">
+        <div class="breach-left">
+          <img src="https://images.unsplash.com/photo-1591696205602-2f950c417cb9?auto=format&fit=crop&w=800&q=80" alt="Mark Zuckerberg">
+          <div class="photo-banner">
+            <div class="num">533,000,000</div>
+            <div class="num-label">Records Exposed</div>
+          </div>
+        </div>
+        <div class="breach-right">
+          <div class="news-header">
+            <div class="publication">Data Breach Report</div>
+            <div class="dateline">Facebook (Meta) · April 2021</div>
+          </div>
+          <h2 class="breach-title">
+            脸书 5.33 亿用户数据大外洩<br>
+            <span class="hl-red">HTTP</span> 协议漏洞成帮凶
+          </h2>
+          <p class="breach-desc">
+            黑客只做了一件事：利用 <span class="hl">HTTP</span> 最基础的漏洞——<br>
+            伪装成数百万台手机，向中央服务器疯狂发送请求。<br>
+            连马克·祖克柏本人的电话、地址、结婚纪念日，<br>
+            也毫无保留地躺在那裡，供全世界 <span class="hl">免费下载</span>。
+          </p>
+          <div class="breach-divider"></div>
+          <p class="breach-footer">
+            一个中心化接口被攻破 = 5.33 亿人隐私裸奔
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SLIDE 6: DHTTP Revolution ===== -->
+    <div class="slide">
+      <div class="slide-dhttp">
+        <div class="dhttp-inner">
+          <div class="dhttp-hero">
+            <div class="dhttp-tag">Decentralized HTTP</div>
+            <h2 class="dhttp-title">终结 <span class="hl">「一锅端」</span> 的数据革命</h2>
+            <p class="dhttp-sub">為什麼 DHTTP 能阻止這場災難？</p>
+          </div>
+
+          <div class="dhttp-points">
+            <div class="dhttp-point">
+              <div class="dhttp-num">01</div>
+              <div class="dhttp-p-body">
+                <div class="dhttp-p-title">沒有中央蜜罐</div>
+                <div class="dhttp-p-desc">数据不再集中託管於單一科技巨頭的伺服器。沒有了「中央大水庫」，黑客就失去了可以一次一鍋端的目標。</div>
+              </div>
+            </div>
+
+            <div class="dhttp-point">
+              <div class="dhttp-num">02</div>
+              <div class="dhttp-p-body">
+                <div class="dhttp-p-title">加密切片與去中心化驗證</div>
+                <div class="dhttp-p-desc">你的私人資料在本地進行加密、切片，並分散存儲於全球的去中心化節點。當黑客試圖透過單一接口抓取資料時，他只會拿到一堆毫無意義的加密雜湊值（Hash）。</div>
+              </div>
+            </div>
+
+            <div class="dhttp-point">
+              <div class="dhttp-num">03</div>
+              <div class="dhttp-p-body">
+                <div class="dhttp-p-title">主權還給密碼學</div>
+                <div class="dhttp-p-desc">不把命運交給巨頭的伺服器，把主權還給密碼學。</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="dhttp-footer">
+            <span class="dhttp-footer-line">不把命運交給巨頭的伺服器，把主權還給密碼學。</span>
+            <span class="dhttp-footer-brand">這就是 <strong>DHTTP</strong>。</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SLIDE 7: DQuic — Breakthrough ===== -->
+    <div class="slide">
+      <div class="dquic-bt">
+        <div class="dquic-bt-inner">
+          <div class="dquic-bt-tag">DQuic Architecture</div>
+          <h2 class="dquic-bt-title">突破限制 <span class="hl">The Breakthrough</span></h2>
+          <div class="dquic-bt-body">
+            <div class="dquic-bt-left">
+              <div class="dquic-bt-sub">⚡ 破除內網物理限制：原生 NAT 穿越</div>
+              <p class="dquic-bt-text">
+                絕大多數的普通終端都隱藏在內網（NAT）之後，沒有獨立的公網 IP，導致外部設備無法直接尋址，這曾是去中心化網絡最大的物理障礙。
+              </p>
+              <p class="dquic-bt-text">
+                DHttp 引入了專為點到點通訊打造的傳輸層協定 —— <strong>DQuic</strong>。
+              </p>
+              <div class="dquic-bt-feats">
+                <div class="dquic-bt-feat">
+                  <div class="dquic-bt-feat-dot"></div>
+                  <div><strong>全面整合，拒絕臃腫：</strong> 我們將傳統 P2P 繁瑣的 STUN、Relay、Signal 等協定，原生地融合成 QUIC 框架的一部分。</div>
+                </div>
+                <div class="dquic-bt-feat">
+                  <div class="dquic-bt-feat-dot"></div>
+                  <div><strong>即插即用的 P2P 系統：</strong> DQuic 本身就是一個完善的點到點通信系統，讓每一台內網設備都能突破枷鎖，自由連接。</div>
+                </div>
+              </div>
+            </div>
+            <div class="dquic-bt-right">
+              <div class="nat-diagram">
+                <div class="nat-device nat-a">設備 A<br><span>10.0.0.5</span></div>
+                <div class="nat-bar">
+                  <div class="nat-bar-label">NAT</div>
+                  <div class="nat-bar-line"></div>
+                </div>
+                <div class="nat-device nat-b">設備 B<br><span>203.0.113.5</span></div>
+                <div class="nat-arrow nat-arrow-1">DQuic 穿越 →</div>
+                <div class="nat-arrow nat-arrow-2">← P2P 直連</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SLIDE 8: DQuic — How It Works ===== -->
+    <div class="slide">
+      <div class="dquic-ep">
+        <div class="dquic-ep-inner">
+          <div class="dquic-ep-tag">Collaboration Model</div>
+          <h2 class="dquic-ep-title">ep &amp; &amp;EP <span class="hl">匿名協作</span></h2>
+          <p class="dquic-ep-sub">編織全網的「軟體路由」</p>
+          <div class="dquic-ep-body">
+            <div class="dquic-ep-diagram">
+              <div class="ep-node ep-node--ep">ep<br><span>內網節點</span></div>
+              <div class="ep-node ep-node--ep">ep<br><span>內網節點</span></div>
+              <div class="ep-node ep-node--amp">⚡&amp;EP<br><span>公網代理人</span></div>
+              <div class="ep-node ep-node--ep">ep<br><span>內網節點</span></div>
+              <div class="ep-node ep-node--target">🎯<br><span>目標節點</span></div>
+              <div class="ep-conn ep-conn-1"></div>
+              <div class="ep-conn ep-conn-2"></div>
+              <div class="ep-conn ep-conn-3"></div>
+              <div class="ep-conn ep-conn-4"></div>
+            </div>
+            <div class="dquic-ep-right">
+              <div class="dquic-ep-card">
+                <div class="dquic-ep-card-title">🤝 公網代理人 (&amp;EP)</div>
+                <p>內網端點（ep）會自動與全網中具備公網條件的匿名端點（&amp;EP）建立協作。在連線初期，&amp;EP 作為你的安全代理人，負責轉達報文並進行加密的 NAT 穿越。</p>
+              </div>
+              <div class="dquic-ep-card">
+                <div class="dquic-ep-card-title">🔄 動態退化機制</div>
+                <p>若極端狀況下穿越失敗，&amp;EP 將自動退化為中繼（Relay）節點，確保通訊 <strong>100% 絕不斷線</strong>。</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SLIDE 9: DQuic — Performance ===== -->
+    <div class="slide">
+      <div class="dquic-perf">
+        <div class="dquic-perf-inner">
+          <div class="dquic-perf-tag">Performance Booster</div>
+          <h2 class="dquic-perf-title">🚀 多路徑同時握手</h2>
+          <p class="dquic-perf-sub">壓榨每一絲頻寬的極致傳輸</p>
+          <div class="dquic-perf-body">
+            <div class="dquic-perf-diagram">
+              <div class="perf-phone">
+                <div class="perf-phone-body">
+                  <div class="perf-phone-screen"></div>
+                </div>
+              </div>
+              <div class="perf-path perf-path--wifi">
+                <div class="perf-path-icon">Wi-Fi</div>
+                <div class="perf-path-line"></div>
+              </div>
+              <div class="perf-path perf-path--5g">
+                <div class="perf-path-icon">5G</div>
+                <div class="perf-path-line"></div>
+              </div>
+              <div class="perf-path perf-path--v6">
+                <div class="perf-path-icon">IPv6</div>
+                <div class="perf-path-line"></div>
+              </div>
+              <div class="perf-converge">
+                <div class="perf-converge-label">單一資料流</div>
+              </div>
+            </div>
+            <div class="dquic-perf-info">
+              <p class="dquic-perf-text">傳統 QUIC 僅允許單一路徑握手，容易造成網路資源的浪費。DQuic 突破性地支援多路徑同時握手，並透過連線 ID（Connection ID）精準標識同一條連接。</p>
+              <p class="dquic-perf-text">它可以同時調度設備的 Wi-Fi、行動網路、IPv4/IPv6 等所有網卡路徑獨立進行 NAT 穿越，帶來前所未有的動態網路適應性。</p>
+            </div>
+          </div>
+          <div class="dquic-perf-tabs">
+            <div class="dquic-perf-tab active">
+              <div class="dquic-perf-tab-title">直連 (Direct)</div>
+              <div class="dquic-perf-tab-stat">優先級 1</div>
+              <div class="dquic-perf-tab-bar"><div class="dquic-perf-tab-fill" style="width:85%"></div></div>
+              <div class="dquic-perf-tab-desc">NAT 穿越成功 → P2P 直連</div>
+            </div>
+            <div class="dquic-perf-tab">
+              <div class="dquic-perf-tab-title">中轉 (Relay)</div>
+              <div class="dquic-perf-tab-stat">優先級 2</div>
+              <div class="dquic-perf-tab-bar"><div class="dquic-perf-tab-fill dquic-perf-tab-fill--alt" style="width:15%"></div></div>
+              <div class="dquic-perf-tab-desc">穿越失敗 → &amp;EP 退化中繼</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SLIDE 10: DDns — Name Resolution ===== -->
+    <div class="slide">
+      <div class="ddns">
+        <div class="ddns-inner">
+          <div class="ddns-tag">DDns · Decentralized DNS</div>
+          <h2 class="ddns-title">名字解析平權</h2>
+          <p class="ddns-sub">讓每一台設備都擁有域名的權利</p>
+
+          <div class="ddns-body">
+            <div class="ddns-left">
+              <div class="ddns-card ddns-card--problem">
+                <div class="ddns-card-label">傳統 DNS</div>
+                <p>只有 A/AAAA 記錄，只能解析靜態公網 IP。<br>「擁有域名」成了具備雲主機的<strong>特權階級象徵</strong>。</p>
+              </div>
+              <div class="ddns-arrow">→</div>
+              <div class="ddns-card ddns-card--solution">
+                <div class="ddns-card-label">DDns</div>
+                <p>讓普通終端也擁有<strong>名字的權利</strong>。</p>
+              </div>
+            </div>
+            <div class="ddns-right">
+              <div class="ddns-record">
+                <div class="ddns-record-tag">E 記錄 · RTYPE 266</div>
+                <div class="ddns-record-items">
+                  <div class="ddns-record-item">
+                    <span class="ddns-record-dot"></span>
+                    <span>公網 IP + 端口信息</span>
+                  </div>
+                  <div class="ddns-record-item">
+                    <span class="ddns-record-dot"></span>
+                    <span>輔助端點地址</span>
+                  </div>
+                </div>
+              </div>
+              <div class="ddns-flags">
+                <div class="ddns-flags-title">8-bit Flags 標誌位</div>
+                <div class="ddns-flags-grid">
+                  <div class="ddns-flag"><span class="ddns-flag-bit">1</span>地址簇 IPv4/IPv6</div>
+                  <div class="ddns-flag"><span class="ddns-flag-bit">2</span>主備設備</div>
+                  <div class="ddns-flag"><span class="ddns-flag-bit">3</span>多主機集群序號</div>
+                  <div class="ddns-flag"><span class="ddns-flag-bit">4</span>需要 NAT 穿越</div>
+                  <div class="ddns-flag"><span class="ddns-flag-bit">5</span>攜帶負載信息</div>
+                  <div class="ddns-flag"><span class="ddns-flag-bit">8</span>發布節點密鑰簽名</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SLIDE 11: DDns — Auto & Future ===== -->
+    <div class="slide">
+      <div class="ddns-auto">
+        <div class="ddns-auto-inner">
+          <div class="ddns-auto-tag">Autonomous &amp; Decentralized</div>
+          <h2 class="ddns-auto-title">自主上報 <span class="hl">·</span> 網絡去中心化</h2>
+
+          <div class="ddns-auto-cards">
+            <div class="ddns-auto-card">
+              <div class="ddns-auto-card-icon">📡</div>
+              <div class="ddns-auto-card-title">自主上報</div>
+              <p>無需人工運維。端點在線時自動探測 P2P 可達地址並自主上報，私鑰簽名記錄內容，杜絕身份欺詐與 DNS 污染。</p>
+            </div>
+            <div class="ddns-auto-card">
+              <div class="ddns-auto-card-icon">🏠</div>
+              <div class="ddns-auto-card-title">局域網 mDNS 優先</div>
+              <p>同一個局域網內優先將 <code>.dhttp.net</code> 映射為 <code>._dhttp.local</code>，走內網通信，高效又安全。</p>
+            </div>
+            <div class="ddns-auto-card ddns-auto-card--future">
+              <div class="ddns-auto-card-icon">🔮</div>
+              <div class="ddns-auto-card-title">未來演進：DHT</div>
+              <p>DDns 將完全運行在基於 DHT 的分布式 KV 數據庫上，全網節點共同維護與緩存，消除萬維網的單點宕機風險。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SLIDE 12: Summary Mind Map ===== -->
+    <div class="slide">
+      <div class="summary">
+        <div class="summary-inner">
+          <h2 class="summary-title">DHTTP 協議架構總結</h2>
+          <div class="summary-map">
+            <div class="summary-col summary-col--problem">
+              <div class="summary-col-header">想解決什麼？</div>
+              <div class="summary-items">
+                <div class="summary-item">雲端<span class="hl-red">中心化壟斷</span></div>
+                <div class="summary-item">隱私 <span class="hl-red">大規模洩漏</span></div>
+                <div class="summary-item">內網智能體／機器人 <span class="hl-red">跨網互聯難</span></div>
+                <div class="summary-item">權限認證 <span class="hl-red">過於複雜</span></div>
+              </div>
+            </div>
+            <div class="summary-col summary-col--solution">
+              <div class="summary-col-header">怎麼解決？</div>
+              <div class="summary-items">
+                <div class="summary-item"><strong class="hl-accent">DQuic</strong> · 傳輸層<br><span class="summary-sub-item">STUN/Relay 融合 → 全網端點分布式路由，多路徑同時握手，原生 NAT 穿越</span></div>
+                <div class="summary-item"><strong class="hl-accent">DHttp</strong> · 應用層<br><span class="summary-sub-item">擴展 HTTP/3，服務端可反向打開雙向流請求客戶端，簡化 URL 並隱藏端口</span></div>
+                <div class="summary-item"><strong class="hl-green">DDns</strong> · 網絡名稱<br><span class="summary-sub-item">E 記錄私鑰簽名自主上報 P2P 地址，未來基於 DHT 徹底去中心化</span></div>
+              </div>
+            </div>
+            <div class="summary-col summary-col--result">
+              <div class="summary-col-header">最終效果</div>
+              <div class="summary-result">
+                安全、可信、可審計的<strong>「全互聯」</strong>負責任網絡。<br>
+                讓每台機器人、每個智能體都能在<strong>不喪失隱私</strong>的前提下自由交流。
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /slides-track -->
+
+  <!-- ===== Pagination ===== -->
+  <div class="pagination" id="pagination"></div>
+
+  <div class="hint">← 方向键翻页 →</div>
+</div><!-- /slides-wrap -->
+
+<script>
+  const track = document.getElementById('track');
+  const slides = track.querySelectorAll('.slide');
+  const total = slides.length;
+  let current = 0;
+  let timelineStep = 0;
+
+  // Build pagination dots
+  const pagination = document.getElementById('pagination');
+  for (let i = 0; i < total; i++) {
+    const btn = document.createElement('button');
+    btn.dataset.index = i;
+    if (i === 0) btn.classList.add('active');
+    btn.addEventListener('click', () => goTo(i));
+    pagination.appendChild(btn);
+  }
+
+  function goTo(index) {
+    if (index < 0) index = 0;
+    if (index >= total) index = total - 1;
+    current = index;
+    timelineStep = 0;
+    track.style.transform = `translateY(-${current * 100}vh)`;
+    slides.forEach((s, i) => s.classList.toggle('active', i === current));
+    document.querySelectorAll('.pagination button').forEach((b, i) => {
+      b.classList.toggle('active', i === current);
+    });
+  }
+
+  function revealNext() {
+    if (current === 1) {
+      const items = slides[1]?.querySelectorAll('.timeline .tl-item');
+      if (!items || timelineStep >= items.length) return false;
+      items[timelineStep].classList.add('revealed');
+      timelineStep++;
+      return true;
+    }
+    return false;
+  }
+
+  // Activate first slide
+  slides[0].classList.add('active');
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowRight' || e.key === ' ') {
+      e.preventDefault();
+      if (revealNext()) return;
+      if (current < total - 1) goTo(current + 1);
+    }
+    if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+      e.preventDefault();
+      if (current > 0) goTo(current - 1);
+    }
+    if (e.key === 'Home') { e.preventDefault(); goTo(0); }
+    if (e.key === 'End') { e.preventDefault(); goTo(total - 1); }
+  });
+
+  // Touch / swipe support
+  let touchY = 0;
+  document.addEventListener('touchstart', (e) => { touchY = e.touches[0].clientY; });
+  document.addEventListener('touchend', (e) => {
+    const diff = touchY - e.changedTouches[0].clientY;
+    if (Math.abs(diff) > 50) {
+      if (diff > 0 && current < total - 1) goTo(current + 1);
+      else if (diff < 0 && current > 0) goTo(current - 1);
+    }
+  });
+
+
+</script>
+
+</body>
+</html>
